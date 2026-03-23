@@ -20,15 +20,21 @@ services:
     cap_add:
       - SYS_NICE  # CAP_SYS_NICE
     ports:
-      - ${DOCKER_DB_EXTERNAL_PORT:-63306}:3306
+      - ${DOCKER_DB_EXTERNAL_PORT:-3306}:3306
     expose:
       - 3306
     environment:
-      - MYSQL_ROOT_PASSWORD=${DOCKER_DB_ROOT_PASSWORD:-password}
+      MYSQL_ROOT_PASSWORD: ${DOCKER_DB_ROOT_PASSWORD:-password}
+      MYSQL_USER: acore
+      MYSQL_PASSWORD: acore
+      MYSQL_ROOT_HOST: "%"
     volumes:
       - type: volume
         source: ac-database
         target: /var/lib/mysql
+    volumes:
+      - ./conf/dist/init.sql:/script/init.sql
+    command: "--init-file /script/init.sql"
     healthcheck:
         test: "/usr/bin/mysql --user=root --password=$$MYSQL_ROOT_PASSWORD --execute \"SHOW DATABASES;\""
         interval: 2s
@@ -115,18 +121,7 @@ services:
       AC_DISABLE_INTERACTIVE: "1"
     #profiles: [db-import]
 
-  ac-dev-server:
-    <<: *ac-shared-conf
-    tty: true
-    privileged: true
-    image: acore/ac-wotlk-dev-server:${DOCKER_IMAGE_TAG:-master}
-    ports:
-      - ${DOCKER_WORLD_EXTERNAL_PORT:-8085}:8085
-      - ${DOCKER_SOAP_EXTERNAL_PORT:-7878}:7878
-      - ${DOCKER_AUTH_EXTERNAL_PORT:-3724}:3724
-    profiles: [dev]
-    volumes:
-      - ac-dev-server:/azerothcore
+
 
   ac-dev-tools:
     <<: *ac-shared-conf
@@ -149,6 +144,25 @@ services:
     environment:
       - PMA_ARBITRARY=1
     profiles: [dev]
+
+#
+# Development server
+#
+
+  ac-dev-server:
+    tty: true
+    privileged: true
+    image: acore/ac-wotlk-dev-server:${DOCKER_IMAGE_TAG:-master}
+    network_mode: host
+    profiles: [dev]
+    volumes:
+      - ac-dev-server:/azerothcore
+      - ./var/shared:/azerothcore/var/shared
+    working_dir: /azerothcore
+    depends_on:
+      ac-database:
+        condition: service_healthy
+ 
 
 volumes:
   ac-database:

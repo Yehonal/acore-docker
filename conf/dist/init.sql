@@ -1,0 +1,7 @@
+DROP USER IF EXISTS 'acore'@'localhost';
+DROP USER IF EXISTS 'acore'@'127.0.0.1';
+CREATE USER 'acore'@'localhost' IDENTIFIED BY 'acore';
+CREATE USER 'acore'@'127.0.0.1' IDENTIFIED BY 'acore';
+GRANT ALL PRIVILEGES ON * . * TO 'acore'@'localhost' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON * . * TO 'acore'@'127.0.0.1' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
